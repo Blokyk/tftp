@@ -2,7 +2,7 @@
 
 var addr = IPAddress.Loopback;
 
-if (args.Length != 1 || Int32.TryParse(args[0], out var port)) {
+if (args.Length != 1 || !Int32.TryParse(args[0], out var port)) {
     Console.Error.WriteLine("Usage: ./tftp <port>");
     return 1;
 }
