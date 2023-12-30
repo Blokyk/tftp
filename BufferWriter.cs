@@ -1,16 +1,10 @@
-public ref struct BufferWriter<T>
+public ref struct BufferWriter<T>(Span<T> span)
 {
     public int Position;
-    public readonly Span<T> Buffer;
+    public readonly Span<T> Buffer = span;
 
-    public BufferWriter(Span<T> span) {
-        Buffer = span;
-    }
-
-    public Span<T> Available
-        => Buffer.Length - Position <= 0
-        ? Span<T>.Empty
-        : Buffer.Slice(Position);
+    public readonly Span<T> Available
+        => Buffer.Length - Position <= 0 ? [] : Buffer[Position..];
 
     public void Skip(int offset) {
         if (offset < 0)
@@ -29,9 +23,7 @@ public ref struct BufferWriter<T>
     }
 
     public bool Write(ReadOnlySpan<T> data) {
-        var free = Available;
-
-        if (!data.TryCopyTo(free))
+        if (!data.TryCopyTo(Available))
             return false;
 
         Position += data.Length;

@@ -1,17 +1,12 @@
-public ref struct BufferReader<T> {
+public ref struct BufferReader<T>(ReadOnlySpan<T> span)
+{
     public int Position;
-    public readonly ReadOnlySpan<T> Buffer;
+    public readonly ReadOnlySpan<T> Buffer = span;
 
-    public int Available => Buffer.Length - Position;
+    public readonly int Available => Buffer.Length - Position;
 
-    public BufferReader(ReadOnlySpan<T> span) {
-        Buffer = span;
-    }
-
-    public ReadOnlySpan<T> Span
-        => Available <= 0
-        ?  ReadOnlySpan<T>.Empty
-        :  Buffer.Slice(Position);
+    public readonly ReadOnlySpan<T> Span
+        => Available <= 0 ? [] :  Buffer[Position..];
 
     public void Skip(int offset) {
         if (offset < 0)
@@ -41,12 +36,12 @@ public ref struct BufferReader<T> {
 
     public ReadOnlySpan<T> Read(int maxCount) {
         if (maxCount <= 0)
-            return ReadOnlySpan<T>.Empty;
+            return [];
 
         var count = Math.Min(Buffer.Length - Position, maxCount);
 
         if (Position + count > Buffer.Length)
-            return ReadOnlySpan<T>.Empty;
+            return [];
 
         var newSpan = Buffer.Slice(Position, count);
 
@@ -56,7 +51,8 @@ public ref struct BufferReader<T> {
     }
 
     public bool TryRead(int maxCount, out ReadOnlySpan<T> output) {
-        output = ReadOnlySpan<T>.Empty;
+        output = [];
+
         if (maxCount <= 0)
             return false;
 
@@ -73,7 +69,7 @@ public ref struct BufferReader<T> {
     }
 
     public bool TryReadExactly(int count, out ReadOnlySpan<T> output) {
-        output = ReadOnlySpan<T>.Empty;
+        output = [];
 
         if (count <= 0)
             return false;

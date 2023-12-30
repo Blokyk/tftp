@@ -1,14 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 
-public readonly struct ReadPacket : IPacket<ReadPacket>
+public readonly struct ReadPacket(string filename, DataMode mode) : IPacket<ReadPacket>
 {
-    public readonly string filename;
-    public readonly DataMode mode;
-
-    public ReadPacket(string filename, DataMode mode) {
-        this.filename = filename;
-        this.mode = mode;
-    }
+    public readonly string filename = filename;
+    public readonly DataMode mode = mode;
 
     public static bool TryParse(ReadOnlySpan<byte> rawData, [NotNullWhen(true)] out ReadPacket? packet) {
         packet = null;
@@ -21,7 +16,7 @@ public readonly struct ReadPacket : IPacket<ReadPacket>
 
         var opcode = reader.Read(2);
 
-        if (!opcode.SequenceEqual(stackalloc byte[2] { 0x1, 0x0 }))
+        if (!opcode.SequenceEqual<byte>([0x1, 0x0]))
             return false;
 
         var filename = Utils.CreateSpanFromNullTerminatedBuffer(reader.Span);

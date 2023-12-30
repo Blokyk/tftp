@@ -1,7 +1,3 @@
-using System.Buffers;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
 internal static class Utils
 {
     public static string CreateSpanFromNullTerminatedBuffer(ReadOnlySpan<byte> buffer) {
@@ -14,7 +10,7 @@ internal static class Utils
 
     public static void PrintByteArray(IEnumerable<byte> buffer, int bytesPerLine = 8) {
         static char getCharForByte(byte b) {
-            return !char.IsControl((char)b) ? Convert.ToChar(b) : '.';
+            return !Char.IsControl((char)b) ? Convert.ToChar(b) : '.';
         }
 
         static void printRawBytes(ReadOnlySpan<byte> bytes, int size) {

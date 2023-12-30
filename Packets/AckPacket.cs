@@ -1,12 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 
-public readonly struct AckPacket : IPacket<AckPacket>
+public readonly struct AckPacket(ushort blockID) : IPacket<AckPacket>
 {
-    public readonly ushort blockID;
-
-    public AckPacket(ushort blockID) {
-        this.blockID = blockID;
-    }
+    public readonly ushort blockID = blockID;
 
     public static bool TryParse(ReadOnlySpan<byte> rawData, [NotNullWhen(true)] out AckPacket? packet) {
         packet = null;
@@ -19,7 +15,7 @@ public readonly struct AckPacket : IPacket<AckPacket>
 
         var opcode = reader.Read(2);
 
-        if (!opcode.SequenceEqual(stackalloc byte[2] { 0x4, 0x0 }))
+        if (!opcode.SequenceEqual<byte>([0x4, 0x0]))
             return false;
 
         var blockIDBuffer = reader.Read(2);
@@ -33,10 +29,10 @@ public readonly struct AckPacket : IPacket<AckPacket>
         => $"ACK({blockID})";
 
     public byte[] ToBytes()
-        => new byte[] {
+        => [
             0x4,
             0x0,
-            (byte)(blockID % 255),
-            (byte)(blockID >> 8)
-        };
+            (byte)blockID, // = blockID % 256
+            (byte)(blockID >>> 8)
+        ];
 }

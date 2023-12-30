@@ -96,8 +96,8 @@ static IPacket? ReadSinglePacket(NetworkStream stream) {
 static void HandleReadPacket(ReadPacket packet, NetworkStream clientStream) {
     using var fileStream = new FileStream(packet.filename, FileMode.Open);
 
-    if (fileStream.Length > ushort.MaxValue * 512) // maximum of blockID
-        ReportError(clientStream, 4, $"File '{packet.filename}' must be {ushort.MaxValue * 512} bytes or less to transfer it with TFTP.");
+    if (fileStream.Length > UInt16.MaxValue * 512) // maximum of blockID
+        ReportError(clientStream, 4, $"File '{packet.filename}' must be {UInt16.MaxValue * 512} bytes or less to transfer it with TFTP.");
 
     byte[] buffer = new byte[512];
 
@@ -137,8 +137,8 @@ static void HandleReadPacket(ReadPacket packet, NetworkStream clientStream) {
 static void HandleWritePacket(WritePacket packet, NetworkStream clientStream) {
     using var fileStream = new FileStream(packet.filename, FileMode.OpenOrCreate);
 
-    if (fileStream.Length > ushort.MaxValue * 512) // maximum of blockID
-        ReportError(clientStream, 4, $"File '{packet.filename}' must be {ushort.MaxValue * 512} bytes or less to transfer it with TFTP.");
+    if (fileStream.Length > UInt16.MaxValue * 512) // maximum of blockID
+        ReportError(clientStream, 4, $"File '{packet.filename}' must be {UInt16.MaxValue * 512} bytes or less to transfer it with TFTP.");
 
     byte[] buffer = new byte[512];
 
