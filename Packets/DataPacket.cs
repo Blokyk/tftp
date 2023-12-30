@@ -19,7 +19,7 @@ public readonly struct DataPacket(ushort blockID, ReadOnlyMemory<byte> data) : I
 
         var opcode = reader.Read(2);
 
-        if (!opcode.SequenceEqual<byte>([0x3, 0x0]))
+        if (!opcode.SequenceEqual<byte>([0x0, 0x3]))
             return false;
 
         var blockIDBuffer = reader.Read(2);
@@ -39,11 +39,11 @@ public readonly struct DataPacket(ushort blockID, ReadOnlyMemory<byte> data) : I
 
         var writer = new BufferWriter<byte>(buffer);
 
-        writer.WriteOne(0x3);
         writer.WriteOne(0x0);
+        writer.WriteOne(0x3);
 
-        writer.WriteOne((byte)blockID); // = blockID % 256
         writer.WriteOne((byte)(blockID >>> 8));
+        writer.WriteOne((byte)blockID); // = blockID % 256
 
         writer.Write(data.Span);
 

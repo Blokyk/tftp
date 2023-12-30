@@ -16,7 +16,7 @@ public readonly struct ReadPacket(string filename, DataMode mode) : IPacket<Read
 
         var opcode = reader.Read(2);
 
-        if (!opcode.SequenceEqual<byte>([0x1, 0x0]))
+        if (!opcode.SequenceEqual<byte>([0x0, 0x1]))
             return false;
 
         var filename = Utils.CreateSpanFromNullTerminatedBuffer(reader.Span);
@@ -56,8 +56,8 @@ public readonly struct ReadPacket(string filename, DataMode mode) : IPacket<Read
 
         var writer = new BufferWriter<byte>(buffer);
 
-        writer.WriteOne(0x1);
         writer.WriteOne(0x0);
+        writer.WriteOne(0x1);
 
         Encoding.ASCII.GetBytes(filename, writer.Available);
         writer.Skip(filenameByteCount);

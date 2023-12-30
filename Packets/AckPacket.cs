@@ -15,7 +15,7 @@ public readonly struct AckPacket(ushort blockID) : IPacket<AckPacket>
 
         var opcode = reader.Read(2);
 
-        if (!opcode.SequenceEqual<byte>([0x4, 0x0]))
+        if (!opcode.SequenceEqual<byte>([0x0, 0x4]))
             return false;
 
         var blockIDBuffer = reader.Read(2);
@@ -30,9 +30,9 @@ public readonly struct AckPacket(ushort blockID) : IPacket<AckPacket>
 
     public byte[] ToBytes()
         => [
-            0x4,
             0x0,
-            (byte)blockID, // = blockID % 256
-            (byte)(blockID >>> 8)
+            0x4,
+            (byte)(blockID >>> 8),
+            (byte)blockID // = blockID % 256
         ];
 }

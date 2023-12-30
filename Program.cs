@@ -55,10 +55,10 @@ static IPacket? ReadSinglePacket(NetworkStream stream) {
     // restrict span to number of bytes actually read
     buffer = buffer.Slice(0, bytesRead);
 
-    if (buffer[1] != 0x0)
+    if (buffer[0] != 0x0)
         return null;
 
-    switch (buffer[0]) {
+    switch (buffer[1]) {
         case 0x1:
             if (!ReadPacket.TryParse(buffer, out var readPacket)) {
                 Console.WriteLine("Couldn't parse RRQ packet");
