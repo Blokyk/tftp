@@ -16,8 +16,9 @@ while (true) {
     using var client = server.AcceptTcpClient();
     Console.WriteLine("[INFO] Client connected!");
 
+    // note: we have to declare it outside because disposing it also closes the connection
+    using var stream = client.GetStream();
     while (client.Connected) {
-        using var stream = client.GetStream();
         var packet = ReadSinglePacket(stream);
 
         switch (packet) {
@@ -46,10 +47,18 @@ while (true) {
 static IPacket? ReadSinglePacket(NetworkStream stream) {
     Console.WriteLine("[INFO] Waiting for data...");
 
-    while (!stream.DataAvailable) {}
+    // wait until there's data available OR we're disconnected
+    SpinWait.SpinUntil(() => {
+        stream.Socket.Receive((Span<byte>)[]); // need to call receive to update `Socket.Connected`
+        return stream.Socket is { Available: > 0 } or { Connected: false };
+    });
+
+    if (!stream.Socket.Connected) {
+        Console.Error.WriteLine("[ERROR] Client disconnected prematurely!");
+        return null;
+    }
 
     Span<byte> buffer = stackalloc byte[512];
-
     var bytesRead = stream.ReadAtLeast(buffer, 2, false);
 
     if (bytesRead < 2) {
