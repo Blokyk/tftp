@@ -1,6 +1,6 @@
 internal static class Utils
 {
-    public static string CreateSpanFromNullTerminatedBuffer(ReadOnlySpan<byte> buffer) {
+    public static string CreateStringFromNullTerminatedBuffer(ReadOnlySpan<byte> buffer) {
         unsafe {
             fixed (byte* ptr = buffer) {
                 return new string((sbyte*)ptr);

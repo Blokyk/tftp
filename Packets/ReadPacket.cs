@@ -19,10 +19,10 @@ public readonly struct ReadPacket(string filename, DataMode mode) : IPacket<Read
         if (!opcode.SequenceEqual<byte>([0x0, 0x1]))
             return false;
 
-        var filename = Utils.CreateSpanFromNullTerminatedBuffer(reader.Span);
+        var filename = Utils.CreateStringFromNullTerminatedBuffer(reader.Span);
         reader.Skip(filename.Length + 1);
 
-        var modeStr = Utils.CreateSpanFromNullTerminatedBuffer(reader.Span);
+        var modeStr = Utils.CreateStringFromNullTerminatedBuffer(reader.Span);
         reader.Skip(modeStr.Length + 1);
 
         if (reader.Available != 0)
