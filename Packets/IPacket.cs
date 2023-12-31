@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 
 public enum DataMode { NetAscii, Octet, Mail }
 

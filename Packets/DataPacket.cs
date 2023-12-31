@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 
 public readonly struct DataPacket(ushort blockID, ReadOnlyMemory<byte> data) : IPacket<DataPacket>
 {
