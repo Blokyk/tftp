@@ -31,6 +31,9 @@ while (true) {
                 HandleWritePacket(writePacket, stream);
                 Console.WriteLine("[INFO] Transfer complete!");
                 break;
+            case null:
+                // in case an error occurred, no need to print another error message
+                break;
             default:
                 Console.WriteLine($"[INFO] Received packet {packet}, but didn't know how to handle it");
                 break;
@@ -49,46 +52,52 @@ static IPacket? ReadSinglePacket(NetworkStream stream) {
 
     var bytesRead = stream.ReadAtLeast(buffer, 2, false);
 
-    if (bytesRead < 2)
+    if (bytesRead < 2) {
+        ReportError(stream, 0, "Packet was too small");
         return null;
+    }
 
     // restrict span to number of bytes actually read
     buffer = buffer.Slice(0, bytesRead);
 
-    if (buffer[0] != 0x0)
+    if (buffer[0] != 0x0) {
+        ReportError(stream, 4, $"Unknown packet opcode 0x{buffer[0]:X2}{buffer[1]:X2}");
         return null;
+    }
 
     switch (buffer[1]) {
         case 0x1:
             if (!ReadPacket.TryParse(buffer, out var readPacket)) {
-                Console.WriteLine("Couldn't parse RRQ packet");
+                ReportError(stream, 4, "Error parsing RRQ packet");
                 return null;
             }
 
             return readPacket;
         case 0x2:
             if (!WritePacket.TryParse(buffer, out var writePacket)) {
-                Console.WriteLine("Couldn't parse WRQ packet");
+                ReportError(stream, 4, "Error parsing WRQ packet");
                 return null;
             }
 
             return writePacket;
         case 0x3:
             if (!DataPacket.TryParse(buffer, out var dataPacket)) {
-                Console.WriteLine("Couldn't parse DATA packet");
+                ReportError(stream, 4, "Error parsing DATA packet");
                 return null;
             }
 
             return dataPacket;
         case 0x4:
             if (!AckPacket.TryParse(buffer, out var ackPacket)) {
-                Console.WriteLine("Couldn't parse ACK packet");
+                ReportError(stream, 4, "Error parsing ACK packet");
                 return null;
             }
 
             return ackPacket;
+        case 0x5:
+            // todo: implement error packets
         default:
-            Console.WriteLine($"Couldn't parse unknown packet with opcode 0x{buffer[0]:X} 0x{buffer[1]:X}");
+            ReportError(stream, 0, $"Unknown packet opcode 0x{buffer[0]:X2}{buffer[1]:X2}");
             return null;
     }
 }
@@ -96,13 +105,14 @@ static IPacket? ReadSinglePacket(NetworkStream stream) {
 static void HandleReadPacket(ReadPacket packet, NetworkStream clientStream) {
     using var fileStream = new FileStream(packet.filename, FileMode.Open);
 
-    if (fileStream.Length > UInt16.MaxValue * 512) // maximum of blockID
+    if (fileStream.Length > UInt16.MaxValue * 512) { // maximum of blockID
         ReportError(clientStream, 4, $"File '{packet.filename}' must be {UInt16.MaxValue * 512} bytes or less to transfer it with TFTP.");
+        return;
+    }
 
     byte[] buffer = new byte[512];
 
     ushort blockID = 1;
-
     while (fileStream.Position < fileStream.Length) {
         var bytesRead = fileStream.Read(buffer);
 
@@ -118,8 +128,12 @@ static void HandleReadPacket(ReadPacket packet, NetworkStream clientStream) {
 
         var responsePacket = ReadSinglePacket(clientStream);
 
+        if (responsePacket is null)
+            return;
+
         if (responsePacket is not AckPacket ackPacket) {
-            ReportError(clientStream, 4, $"Packet {responsePacket} is not an ACK packet");
+            // todo: add error packet
+            ReportError(clientStream, 4, $"Expected an ACK packet, but got {responsePacket}");
             return;
         }
 
@@ -137,24 +151,29 @@ static void HandleReadPacket(ReadPacket packet, NetworkStream clientStream) {
 static void HandleWritePacket(WritePacket packet, NetworkStream clientStream) {
     using var fileStream = new FileStream(packet.filename, FileMode.OpenOrCreate);
 
-    if (fileStream.Length > UInt16.MaxValue * 512) // maximum of blockID
+    if (fileStream.Length > UInt16.MaxValue * 512) { // maximum of blockID
         ReportError(clientStream, 4, $"File '{packet.filename}' must be {UInt16.MaxValue * 512} bytes or less to transfer it with TFTP.");
-
-    byte[] buffer = new byte[512];
-
-    ushort blockID = 0;
+        return;
+    }
 
     int bytesWritten = 0;
 
-    do {
+    ushort blockID = 0;
+    bool isLastBlock = false;
+    while (!isLastBlock) {
         var ackPacket = new AckPacket(blockID);
+        clientStream.Write(ackPacket.ToBytes());
 
-        Console.WriteLine($"[ERR] Sent {ackPacket}, waiting for DATA packet...");
+        Console.WriteLine($"[INFO] Sent {ackPacket}, waiting for DATA packet...");
 
         var responsePacket = ReadSinglePacket(clientStream);
 
+        if (responsePacket is null)
+            return;
+
         if (responsePacket is not DataPacket dataPacket) {
-            ReportError(clientStream, 4, $"Packet {responsePacket} is not a DATA packet");
+            // todo: add error packet
+            ReportError(clientStream, 4, $"Expected a DATA packet, but got {responsePacket}");
             return;
         }
 
@@ -168,8 +187,9 @@ static void HandleWritePacket(WritePacket packet, NetworkStream clientStream) {
         bytesWritten = dataPacket.data.Length;
         fileStream.Write(dataPacket.data.Span);
 
+        isLastBlock = dataPacket.IsLastBlock;
         blockID++;
-    } while (bytesWritten == 512);
+    }
 }
 
 static void ReportError(NetworkStream stream, int errCode, string message) {
