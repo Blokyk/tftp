@@ -12,7 +12,7 @@ public readonly struct DataPacket(ushort blockID, ReadOnlyMemory<byte> data) : I
         packet = null;
 
         // opcode + 2 for block ID
-        if (rawData.Length is < 4 or > 512)
+        if (rawData.Length is < 4 or > 516)
             return false;
 
         var reader = new BufferReader<byte>(rawData);

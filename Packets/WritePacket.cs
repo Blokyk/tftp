@@ -9,7 +9,7 @@ public readonly struct WritePacket(string filename, DataMode mode) : IPacket<Wri
         packet = null;
 
         // opcode + 2 terminating bytes for filename and mode strings
-        if (rawData.Length is < 4 or > 512)
+        if (rawData.Length is < 4)
             return false;
 
         var reader = new BufferReader<byte>(rawData);
@@ -25,6 +25,7 @@ public readonly struct WritePacket(string filename, DataMode mode) : IPacket<Wri
         var modeStr = Utils.CreateStringFromNullTerminatedBuffer(reader.Span);
         reader.Skip(modeStr.Length + 1);
 
+        // if there's still bytes available after we're done parsing
         if (reader.Available != 0)
             return false;
 

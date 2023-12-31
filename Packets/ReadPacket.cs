@@ -9,7 +9,7 @@ public readonly struct ReadPacket(string filename, DataMode mode) : IPacket<Read
         packet = null;
 
         // opcode + 2 terminating bytes for filename and mode strings
-        if (rawData.Length is < 4 or > 512)
+        if (rawData.Length is < 4)
             return false;
 
         var reader = new BufferReader<byte>(rawData);
