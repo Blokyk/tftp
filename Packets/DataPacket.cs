@@ -17,13 +17,16 @@ public readonly struct DataPacket(ushort blockID, ReadOnlyMemory<byte> data) : I
 
         var reader = new BufferReader<byte>(rawData);
 
-        var opcode = reader.Read(2);
+        if (!reader.TryReadExactly(2, out var opcode))
+            return false;
 
         if (!opcode.SequenceEqual<byte>([0x0, 0x3]))
             return false;
 
-        var blockIDBuffer = reader.Read(2);
-        var blockID = BitConverter.ToUInt16(blockIDBuffer);
+        if (!reader.TryReadExactly(2, out var blockIDBuffer))
+            return false;
+
+        var blockID = (ushort)((blockIDBuffer[0] << 8) | (blockIDBuffer[1]));
 
         var data = reader.Span.ToArray().AsMemory();
 

@@ -34,22 +34,6 @@ public ref struct BufferReader<T>(ReadOnlySpan<T> span)
         return succeeded ? count : 0;
     }
 
-    public ReadOnlySpan<T> Read(int maxCount) {
-        if (maxCount <= 0)
-            return [];
-
-        var count = Math.Min(Buffer.Length - Position, maxCount);
-
-        if (Position + count > Buffer.Length)
-            return [];
-
-        var newSpan = Buffer.Slice(Position, count);
-
-        Position += count;
-
-        return newSpan;
-    }
-
     public bool TryRead(int maxCount, out ReadOnlySpan<T> output) {
         output = [];
 

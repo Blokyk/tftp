@@ -14,7 +14,8 @@ public readonly struct WritePacket(string filename, DataMode mode) : IPacket<Wri
 
         var reader = new BufferReader<byte>(rawData);
 
-        var opcode = reader.Read(2);
+        if (!reader.TryReadExactly(2, out var opcode))
+            return false;
 
         if (!opcode.SequenceEqual<byte>([0x0, 0x2]))
             return false;

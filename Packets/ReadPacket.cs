@@ -14,7 +14,8 @@ public readonly struct ReadPacket(string filename, DataMode mode) : IPacket<Read
 
         var reader = new BufferReader<byte>(rawData);
 
-        var opcode = reader.Read(2);
+        if (!reader.TryReadExactly(2, out var opcode))
+            return false;
 
         if (!opcode.SequenceEqual<byte>([0x0, 0x1]))
             return false;
